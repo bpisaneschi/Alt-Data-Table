@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Alternative Data Table</h1>
+        <form id="task-form">
+            <input type="text" id="task-input" name="task" placeholder="Enter a new task" required>
+            <input type="submit" value="Add Task">
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Task</th>
+                    <th>Work Flow Step</th>
+                    <th>Tools</th>
+                    <th>ChatGPT Prompts</th>
+                    <th>Influential Research</th>
+                </tr>
+            </thead>
+            <tbody id="task-table-body">
+                {% for task_data in tasks_data %}
+                    <tr>
+                        <td data-task-id="{{ task_data.task.id }}">{{ task_data.task.task_name }}</td>
+                        <td class="button-container workflow-step-container">
+                            {% for workflow_step in task_data.workflow_steps['workflow_step'] %}
+                            <button class="like-btn" data-workflow-step-id="{{ workflow_step.id }}" data-workflow-step-name="{{ workflow_step.name }}" data-workflow-category="{{ workflow_step.category }}">
+                                {{ workflow_step.name }} <span class="thumbs-up">👍 {{ workflow_step.likes }}</span>
+                            </button>
+                            {% endfor %}
+                        </td>
+                        <td class="button-container workflow-step-container">
+                            {% for workflow_step in task_data.workflow_steps['tools'] %}
+                            <button class="like-btn" data-workflow-step-id="{{ workflow_step.id }}" data-workflow-step-name="{{ workflow_step.name }}" data-workflow-category="{{ workflow_step.category }}" data-github-url="{{ workflow_step.github_url }}" data-tool-description="{{ workflow_step.tool_description }}" data-huggingface-url="{{ workflow_step.huggingface_url }}">
+                                {{ workflow_step.name }} <span class="thumbs-up">👍 {{ workflow_step.likes }}</span>
+                            </button>
+                            {% endfor %}
+                        </td>
+                        <td class="button-container workflow-step-container">
+                            {% for workflow_step in task_data.workflow_steps['chatgpt_prompts'] %}
+                            <button class="like-btn" data-workflow-step-id="{{ workflow_step.id }}" data-workflow-step-name="{{ workflow_step.name }}" data-workflow-category="{{ workflow_step.category }}" data-chatgpt-prompt="{{ workflow_step.chatgpt_prompt }}">
+                                {{ workflow_step.name }} <span class="thumbs-up">👍 {{ workflow_step.likes }}</span>
+                            </button>
+                            {% endfor %}
+                        </td>
+                        <td class="button-container workflow-step-container">
+                            {% for workflow_step in task_data.workflow_steps['influential_research'] %}
+                            <button class="like-btn" data-workflow-step-id="{{ workflow_step.id }}" data-workflow-step-name="{{ workflow_step.name }}" data-workflow-category="{{ workflow_step.category }}" data-github-url="{{ workflow_step.github_url }}" data-research-description="{{ workflow_step.research_description }}" data-research-url="{{ workflow_step.research_url }}">
+                                {{ workflow_step.name }} <span class="thumbs-up">👍 {{ workflow_step.likes }}</span>
+                            </button>
+                            {% endfor %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="work-flow-input-container" class="custom-modal">
+            <div class="custom-modal-content">
+                <input type="text" id="work-flow-input" placeholder="Enter a name">
+                <input type="text" id="tool-description-input" placeholder="Enter Description" style="display: none;"> <!-- Add this line -->
+                <input type="text" id="huggingface-url-input" placeholder="Enter huggingface URL" style="display: none;"> <!-- Add this line -->
+                <input type="text" id="github-url-input" placeholder="Enter Github URL" style="display: none;"> <!-- Add this line -->
+                <input type="text" id="chatgpt-prompt-input" placeholder="Enter ChatGPT Prompt" style="display: none;"> <!-- Add this line -->
+                <input type="text" id="research-description-input" placeholder="Enter Description" style="display: none;"> <!-- Add this line -->
+                <input type="text" id="research-url-input" placeholder="Enter Research URL" style="display: none;"> <!-- Add this line -->
+                <button id="submit-work-flow">Submit</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='scripts.js') }}" defer></script>
+</body>
+</html>
