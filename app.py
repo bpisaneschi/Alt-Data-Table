@@ -1,8 +1,10 @@
 from flask import Flask, render_template, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
+import os
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance/tasks.db")}'
 db = SQLAlchemy(app)
 
 class Task(db.Model):
