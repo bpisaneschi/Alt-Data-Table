@@ -21,16 +21,7 @@ class WorkflowStep(db.Model):
     github_url = db.Column(db.String(200), nullable=True) # Add this line
     chatgpt_prompt = db.Column(db.String(1000),nullable=True)
     research_description = db.Column(db.String(1000),nullable = True)
-    research_url = db.Column(db.String(200),nullable=True)
-
-if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-
-        task_to_delete = None
-        if task_to_delete:
-            db.session.delete(task_to_delete)
-            db.session.commit()
+    research_url = db.Column(db.String(200),nullable=True)    
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -104,6 +95,20 @@ def delete_workflow_step(workflow_step_id):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    with app.app_context():
+        db.create_all()
+
+        task_to_delete = None
+        if task_to_delete:
+            db.session.delete(task_to_delete)
+            db.session.commit()
+
+    app.run()
+
+
+
+
+
+    
     
 
