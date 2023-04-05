@@ -95,6 +95,9 @@ def delete_workflow_step(workflow_step_id):
     except:
         return jsonify({'result': 'error', 'message': 'There was an issue deleting the workflow step'})
 
+@app.route('/test')
+def test():
+    return "Test route is working!"
 
 if __name__ == "__main__":
     with app.app_context():
