@@ -1,5 +1,6 @@
 import sqlite3
 from sqlalchemy import create_engine, MetaData, Table, insert
+import pandas as pd
 
 
 sqlite_conn = sqlite3.connect(r'C:\Users\brian.pisanechi\OneDrive - CFA Institute\Documents\Alt Data Table\Alt Data Table V2\instance\tasks.db')
@@ -9,14 +10,15 @@ postgres_engine = create_engine('postgresql://atldatatable_user:IU8VoPGfRQqy35UX
 
 metadata = MetaData()
 metadata.reflect(bind=postgres_engine)
+tables = [table for table in sqlite_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")]
 
-for table_name in sqlite_cursor.execute("SELECT name FROM sqlite_master WHERE type='table';"):
+for table_name in tables:
     table_name = table_name[0]
     table = Table(table_name, metadata, autoload_with=postgres_engine)
 
     # Fetch data from the SQLite table
-    sqlite_cursor.execute(f"SELECT * FROM {table_name}")
-    rows = sqlite_cursor.fetchall()
+    response = sqlite_cursor.execute(f"SELECT * FROM {table_name}")
+    rows = response.fetchall()
 
     # Insert data into the PostgreSQL table
     if rows:
