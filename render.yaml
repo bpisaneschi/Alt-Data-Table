@@ -4,8 +4,8 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn "app:app" --bind 0.0.0.0:$PORT --worker-class gevent --workers 2
+    startCommand: flask db upgrade && python app.py
     healthCheckPath: /test
     envVars:
-      - key: FLASK_ENV
-        value: productio
+      - key: DATABASE_URL
+        value: postgresql://atldatatable_user:IU8VoPGfRQqy35UXKTqoJA4g958N4yyp@dpg-cgn6tqjh4hsvot3l21ug-a/atldatatable

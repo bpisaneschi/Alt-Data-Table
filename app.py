@@ -1,11 +1,15 @@
 from flask import Flask, render_template, request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 import os
-basedir = os.path.abspath(os.path.dirname(__file__))
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(basedir, "instance/tasks.db")}'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key=True)
