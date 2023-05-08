@@ -566,6 +566,7 @@ function editWorkflowStep (likeButton) {
 
     // Pre-fill input fields with existing 
     
+    document.getElementById('name-input').value = workflowStepName;
     document.getElementById("work-flow-input").value = workflowStepName;
     document.getElementById("tool-description-input").value = toolDescription || "";
     document.getElementById("huggingface-url-input").value = huggingfaceUrl || "";
