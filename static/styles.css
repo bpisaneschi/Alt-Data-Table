@@ -199,3 +199,43 @@ form {
     padding: 0;
     margin: 0;
   }
+
+.task-context-menu {
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: inline-block;
+    list-style-type: none;
+    margin: 0;
+    padding: 5px;
+    position: absolute;
+    z-index: 100;
+}
+
+.task-context-menu li {
+    cursor: pointer;
+    padding: 5px;
+}
+
+.task-context-menu li:hover {
+    background-color: #f0f0f0;
+}
+
+.like-btn.upvoted .thumbs-up {
+    color: #007bff; /* Change this to your preferred color when upvoted */
+}
+
+.image-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Optional: Set a height for the container */
+    height: 100%;
+}
+
+.instructions-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}

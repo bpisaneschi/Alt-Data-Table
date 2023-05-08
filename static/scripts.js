@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('task-form').addEventListener('submit', addTask);
-    document.getElementById('submit-work-flow').addEventListener('click', submitWorkFlowName);
+    document.getElementById('submit-work-flow').addEventListener('click', function (event) {
+        submitWorkFlowName(event);
+        clearInputFields();
+    });
 
     createLikebuttonsOnLoad();
-    addWorkflowStepCellEventListeners();
+    addTaskCellEventListeners();
 });
 
 let currentWorkFlowButton = null;
@@ -28,6 +31,7 @@ async function addTask(event) {
     const tableBody = document.getElementById('task-table-body');
     const row = tableBody.insertRow();
     const taskCell = row.insertCell();
+    console.log('Task cell created:', taskCell);
     const workFlowStepCell = row.insertCell();
     const toolsCell = row.insertCell();
     const chatGPTPromptsCell = row.insertCell();
@@ -35,6 +39,10 @@ async function addTask(event) {
 
     taskCell.textContent = task;
     taskCell.dataset.taskId = taskId;
+    taskCell.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+        showTaskContextMenu(event);
+    });
 
     [workFlowStepCell, toolsCell, chatGPTPromptsCell, influentialResearchCell].forEach(cell => {
         cell.addEventListener('click', function () {
@@ -50,23 +58,118 @@ window.onclick = function (event) {
     const workFlowInputContainer = document.getElementById('work-flow-input-container');
     if (event.target === workFlowInputContainer) {
         workFlowInputContainer.style.display = 'none';
-    }
+        clearInputFields();
+    };
+    
 };
+
+function showTaskContextMenu(event) {
+    const taskId = event.target.dataset.taskId;
+
+    // Create a context menu with a delete option
+    const contextMenu = document.createElement('ul');
+    contextMenu.classList.add('task-context-menu');
+    contextMenu.innerHTML = `
+        <li id="delete-task" data-task-id="${taskId}">Delete</li>
+        <li id="edit-task" data-task-id="${taskId}">Edit</li>
+    `;
+    contextMenu.style.left = `${event.pageX}px`;
+    contextMenu.style.top = `${event.pageY}px`;
+    document.body.appendChild(contextMenu);
+
+    // Add a click event listener to the delete option
+    const deleteOption = contextMenu.querySelector('#delete-task');
+    deleteOption.addEventListener('click', () => {
+        deleteTask(taskId, event.target);
+        contextMenu.remove();
+    });
+
+    // Add a click event listener to the edit option
+    const editOption = contextMenu.querySelector('#edit-task');
+    editOption.addEventListener('click', () => {
+        editTask(taskId, event.target);
+        contextMenu.remove();
+    });
+
+    let removeTimeoutId = setTimeout(() => {
+        contextMenu.remove();
+    }, 1000);
+    
+    contextMenu.addEventListener('mouseenter', () => {
+        clearTimeout(removeTimeoutId);
+    });
+
+    // Remove the context menu when the mouse leaves the menu
+    contextMenu.addEventListener('mouseleave', () => {
+        contextMenu.remove();
+    });
+}
+
+function deleteTask(taskId, taskCell) {
+    if (confirm('Are you sure you want to delete this task?')) {
+        // Remove the row containing the task cell
+        const row = taskCell.closest('tr');
+        row.parentElement.removeChild(row);
+
+        // Delete the task from the server
+        deleteTaskFromServer(taskId);
+    }
+}
+
+async function deleteTaskFromServer(taskId) {
+    const response = await fetch(`/task/${taskId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ taskId: taskId })
+    });
+
+    if (!response.ok) {
+        console.error('There was an issue deleting the task');
+        console.error('Server response:', response); // Log the server response
+    }
+}
+
+function editTask(taskId, taskCell) {
+    const taskName = prompt('Edit task name:', taskCell.textContent);
+
+    if (taskName.trim().length === 0) {
+        alert('Please enter a valid task name');
+        return;
+    }
+
+    if (isTaskDuplicate(taskName)) {
+        alert('This task already exists in the table');
+        return;
+    }
+
+    // Update the task cell text content
+    taskCell.textContent = taskName;
+
+    // Update the task on the server
+    updateTaskOnServer(taskId, taskName);
+}
 
 // Show the input fields to add or edit workflow steps
 function showWorkFlowInput(cell) {
     currentWorkFlowButton = cell;
     const workFlowInputContainer = document.getElementById('work-flow-input-container');
     const workFlowInput = document.getElementById('work-flow-input');
-    // const githubUrlInput = document.getElementById('github-url-input');
-    // const chatgptPrompt = document.getElementById('chatgpt-prompt-input')
-    // const researchDescription = document.getElementById('research-description-input')
-    // const researchUrl = document.getElementById('research-url-input')
-    workFlowInput.value = '';
+    const nameInput = document.getElementById('name-input');
+    const modalTitle = document.getElementById('modal-title');
+    let titleText;
+    if (cell.cellIndex===1) {
+        titleText = 'Workflow Step Input'
+    } else if (cell.cellIndex===2) {titleText='Tool Input'
+    } else if (cell.cellIndex===3) {titleText='ChatGPT Prompt Input'
+    } else if (cell.cellIndex===4) {titleText='Influential Research Input'
+    } 
+
 
     showToolInput(cell.cellIndex === 2);
     showChatgptPromptInput(cell.cellIndex ===3);
-    showResearchInput(cell.cellIndex ===4)
+    showResearchInput(cell.cellIndex ===4);
 
     let buttonContainer = currentWorkFlowButton.querySelector('.workflow-step-container');
     if (!buttonContainer) {
@@ -76,7 +179,16 @@ function showWorkFlowInput(cell) {
     }
 
     workFlowInputContainer.style.display = 'block';
-    workFlowInput.focus();
+    modalTitle.textContent = titleText;
+    if (cell.cellIndex===1) {
+        nameInput.style.display = 'none';
+        workFlowInput.style.display = 'block';
+        workFlowInput.focus();
+    } else {
+        workFlowInput.style.display = 'none';
+        nameInput.style.display = 'block';
+        nameInput.focus();
+    }
 }
 
 // Show or hide the Github URL input based on the cell index
@@ -106,6 +218,7 @@ function showResearchInput(show) {
 async function submitWorkFlowName(event) {
     event.preventDefault();
     const workFlowInput = document.getElementById('work-flow-input');
+    const nameInput = document.getElementById('name-input');
     const toolDescriptionInput = document.getElementById('tool-description-input')
     const huggingfaceUrlInput = document.getElementById('huggingface-url-input')
     const githubUrlInput = document.getElementById('github-url-input');
@@ -113,15 +226,20 @@ async function submitWorkFlowName(event) {
     const researchDescriptionInput = document.getElementById('research-description-input')
     const researchUrlInput = document.getElementById('research-url-input')
     const toolDescription = toolDescriptionInput.value.trim()
+    const name = nameInput.value.trim()
     const huggingfaceUrl = huggingfaceUrlInput.value.trim()
-    const workFlowName = workFlowInput.value.trim();
     const githubUrl = githubUrlInput.value.trim();
     const chatgptPrompt = chatgptPromptInput.value.trim();
     const researchDescription = researchDescriptionInput.value.trim();
     const researchUrl = researchUrlInput.value.trim(); 
+    const category = getCellCategory(currentWorkFlowButton);
+
+    if (category === 'workflow_step') {
+        workFlowName=workFlowInput.options[workFlowInput.selectedIndex].value.trim();}
+        else {workFlowName=name}
 
     if (isWorkflowStepNameDuplicate(workFlowName, currentWorkFlowButton)) {
-        alert('This workflow step name already exists in this cell');
+        alert('This name already exists in this cell');
         return;
     }
 
@@ -130,52 +248,41 @@ async function submitWorkFlowName(event) {
         return;
     }
 
+    let submit = document.getElementById('submit-work-flow')    
+    console.log(submit)
+    let workflowStep_id = submit.dataset.workflowStepId
+    let likes = submit.dataset.likes
+    if (!likes) {likes = 0;}
+    oldButton = document.querySelector(`.like-btn[data-workflow-step-id="${workflowStep_id}"]`)
+
     const taskId = getTaskId(currentWorkFlowButton);
-    const category = getCellCategory(currentWorkFlowButton);
-    const workflowStepId = await addOrUpdateWorkflowStep({         
-        task_id: taskId,
-        workflow_step_name: workFlowName,
-        category: category,
-        tool_description: toolDescription,
-        huggingface_url: huggingfaceUrl,
-        github_url: githubUrl,
-        likes: 0,
-        chatgpt_prompt: chatgptPrompt,
-        research_description: researchDescription,
-        research_url: researchUrl
-    });
+    const data = {task_id: taskId,workflow_step_name: workFlowName,category: category,tool_description: toolDescription,huggingface_url: huggingfaceUrl,github_url: githubUrl,likes: likes,chatgpt_prompt: chatgptPrompt,research_description: researchDescription,research_url: researchUrl}
+    const workflowStepId = await addOrUpdateWorkflowStep(data,workflowStep_id);
 
-    const buttonContainer = currentWorkFlowButton.querySelector('.workflow-step-container');
-    const existingButton = Array.from(buttonContainer.getElementsByClassName('like-btn')).find(button => button.textContent.includes(workFlowName));
+    const likeButton = document.createElement('button');
+    likeButton.classList.add('like-btn');
+    likeButton.innerHTML = `${workFlowName} <span class="thumbs-up">👍 ${likes}</span>`;
+    likeButton.dataset.workflowStepId = workflowStepId;
+    likeButton.dataset.workflowStepName = workFlowName;
+    likeButton.dataset.workflowCategory = category;
+    likeButton.dataset.toolDescription = toolDescription;
+    likeButton.dataset.huggingfaceUrl = huggingfaceUrl;
+    likeButton.dataset.githubUrl = githubUrl;
+    likeButton.dataset.chatgptPrompt = chatgptPrompt;
+    likeButton.dataset.researchDescription = researchDescription;
+    likeButton.dataset.researchUrl = researchUrl;
 
-    if (existingButton) {
-        const thumbsUpElement = existingButton.querySelector('.thumbs-up');
-        const likes = parseInt(thumbsUpElement.textContent.split(' ')[1]) + 1;
-        thumbsUpElement.textContent = `👍 ${likes}`;
-        await addOrUpdateWorkflowStep(taskId, workFlowName, category, likes, githubUrl,chatgptPrompt,researchDescription,researchUrl,existingButton.dataset.workflowStepId);
-    } else {
-        const likeButton = document.createElement('button');
-        likeButton.classList.add('like-btn');
-        likeButton.innerHTML = `${workFlowName} <span class="thumbs-up">👍 0</span>`;
-        likeButton.dataset.workflowStepId = workflowStepId;
-        likeButton.dataset.workflowStepName = workFlowName;
-        likeButton.dataset.workflowCategory = category;
-        likeButton.dataset.toolDescription = toolDescription;
-        likeButton.dataset.huggingfaceUrl = huggingfaceUrl;
-        likeButton.dataset.githubUrl = githubUrl;
-        likeButton.dataset.chatgptPrompt = chatgptPrompt;
-        likeButton.dataset.researchDescription = researchDescription;
-        likeButton.dataset.researchUrl = researchUrl;
-
-        const hoverMenu = createHoverMenu(category,workFlowName, toolDescription,huggingfaceUrl,githubUrl,chatgptPrompt,researchDescription,researchUrl);
-        likeButton.appendChild(hoverMenu);
-        addLikeButtonEventListener(likeButton);
+    const hoverMenu = createHoverMenu(category,workFlowName, toolDescription,huggingfaceUrl,githubUrl,chatgptPrompt,researchDescription,researchUrl);
+    likeButton.appendChild(hoverMenu);
+    addLikeButtonEventListener(likeButton);
+    if (oldButton) {
         sortLikeButtons(currentWorkFlowButton);
-
-        currentWorkFlowButton.appendChild(likeButton);
+        replaceOldButton(oldButton,likeButton)
+    } else {
+    sortLikeButtons(currentWorkFlowButton);
+    currentWorkFlowButton.appendChild(likeButton);
     }
     
-
     const workFlowInputContainer = document.getElementById('work-flow-input-container');
     workFlowInputContainer.style.display = 'none';
 }
@@ -183,8 +290,10 @@ async function submitWorkFlowName(event) {
 // Create the hover menu for the like button
 function createHoverMenu(category,workFlowName, toolDescription,huggingfaceUrl,githubUrl,chatgptPrompt,researchDescription,researchUrl) {
     const hoverMenu = document.createElement('div');
-    hoverMenu.classList.add('hover-menu');
-    hoverMenu.innerHTML = `<div id="hover-list"><ul><li><p><b>Name:</b> ${workFlowName}</p>`
+    if (category !== 'workflow_step') {
+        hoverMenu.innerHTML = `<div id="hover-list"><ul><li><p><b>Name:</b> ${workFlowName}</p>`;
+        hoverMenu.classList.add('hover-menu');
+    }
 
     let huggingfaceLink = '';
     let githubLink = '';
@@ -257,9 +366,17 @@ function sortLikeButtons(cell) {
 }
 
 // Add or update a workflow step on the server
-async function addOrUpdateWorkflowStep(data) {
-    const response = await fetch('/workflow_step', {
-        method: 'POST',
+async function addOrUpdateWorkflowStep(data, workflowStepId = null) {
+    let url = '/workflow_step';
+    let method = 'POST';
+
+    if (workflowStepId) {
+        url += '/' + workflowStepId;
+        method = 'PUT';
+    }
+    console.log(method)
+    const response = await fetch(url, {
+        method: method,
         headers: {
             'Content-Type': 'application/json'
         },
@@ -299,29 +416,62 @@ async function addTaskToServer(task) {
     }
 }
 
+async function updateTaskOnServer(taskId, taskName) {
+    const response = await fetch(`/task/${taskId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ task: taskName })
+    });
+
+    if (!response.ok) {
+        console.error('There was an issue updating the task');
+        console.error('Server response:', response); // Log the server response
+    }
+}
+
+
 // Add event listeners to the like buttons
 function addLikeButtonEventListener(likeButton) {
-    likeButton.addEventListener('contextmenu', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        deleteButton(this);
-        });
     likeButton.addEventListener('click', async function (event) {
         event.stopPropagation();
         const thumbsUpElement = this.querySelector('.thumbs-up');
-        const likes = parseInt(thumbsUpElement.textContent.split(' ')[1]) + 1;
+        const currentLikes = parseInt(thumbsUpElement.textContent.split(' ')[1]);
+        const workflowStepId = this.dataset.workflowStepId;
+
+        // Retrieve the upvoted state from local storage
+        const upvotedSteps = JSON.parse(localStorage.getItem('upvotedSteps') || '{}');
+        const isUpvoted = upvotedSteps.hasOwnProperty(workflowStepId);
+
+        // Check if the like button has been upvoted by the user before
+        let newLikes = currentLikes;
+
+        if (isUpvoted) {
+            // If already upvoted, remove the upvote and decrement the count
+            newLikes = currentLikes - 1;
+            this.classList.remove('upvoted');
+            delete upvotedSteps[workflowStepId];
+        } else {
+            // If not upvoted, add the upvote and increment the count
+            newLikes = currentLikes + 1;
+            this.classList.add('upvoted');
+            upvotedSteps[workflowStepId] = true;
+        }
+
+        localStorage.setItem('upvotedSteps', JSON.stringify(upvotedSteps));
+        thumbsUpElement.textContent = `👍 ${newLikes}`;
+        const likes = newLikes
         const toolDescription = this.getAttribute('data-tool-description')
         const huggingfaceUrl = this.getAttribute('data-huggingface-url')
         const githubUrl = this.getAttribute('data-github-url')
         const chatgptPrompt = this.getAttribute('data-chatgpt-prompt')
         const researchDescription = this.getAttribute('data-research-description')
         const researchUrl = this.getAttribute('data-research-url')
-        thumbsUpElement.textContent = `👍 ${likes}`;
     
         // Update the workflow step with the new likes count
         const taskId = getTaskId(this.parentElement.parentElement);
         const category = this.getAttribute('data-workflow-category');
-        const workflowStepId = this.dataset.workflowStepId;
         const workflowStepName = this.dataset.workflowStepName; // Get the workflow step name from the like button's parent element
         await addOrUpdateWorkflowStep({
             task_id: taskId,
@@ -343,6 +493,7 @@ function addLikeButtonEventListener(likeButton) {
 
     });
     
+    addLikeButtonContextEventListeners(likeButton);
 
     // Add event listeners for hover menu
     const hoverMenu = likeButton.querySelector('.hover-menu');
@@ -357,6 +508,89 @@ function addLikeButtonEventListener(likeButton) {
             hoverMenu.style.display = 'none';
         });
     }
+}
+
+function addLikeButtonContextEventListeners (likeButton) {
+    likeButton.addEventListener('contextmenu', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const contextMenu = document.createElement('ul');
+        contextMenu.classList.add('task-context-menu');
+        contextMenu.innerHTML = `
+            <li id="delete-workflow-step" data-workflow-step-id="${likeButton.dataset.workflowStepId}">Delete</li>
+            <li id="edit-workflow-step" data-workflow-step-id="${likeButton.dataset.workflowStepId}">Edit</li>
+        `;
+        contextMenu.style.left = `${event.pageX}px`;
+        contextMenu.style.top = `${event.pageY}px`;
+        document.body.appendChild(contextMenu);
+
+        const deleteOption = contextMenu.querySelector('#delete-workflow-step');
+        deleteOption.addEventListener('click', () => {
+            deleteButton(likeButton);
+            contextMenu.remove();
+        });
+
+        const editOption = contextMenu.querySelector('#edit-workflow-step');
+        editOption.addEventListener('click', () => {
+            editWorkflowStep(likeButton)
+            contextMenu.remove();
+        });
+
+        let removeTimeoutId = setTimeout(() => {
+            contextMenu.remove();
+        }, 1000);
+
+        contextMenu.addEventListener('mouseenter', () => {
+            clearTimeout(removeTimeoutId);
+        });
+
+        contextMenu.addEventListener('mouseleave', () => {
+            contextMenu.remove();
+        });
+    });
+}
+
+function editWorkflowStep (likeButton) {
+    const workflowStepId = likeButton.dataset.workflowStepId;
+    const workflowStepName = likeButton.dataset.workflowStepName;
+    const toolDescription = likeButton.dataset.toolDescription;
+    const huggingfaceUrl = likeButton.dataset.huggingfaceUrl;
+    const githubUrl = likeButton.dataset.githubUrl;
+    const chatgptPrompt = likeButton.dataset.chatgptPrompt;
+    const researchDescription = likeButton.dataset.researchDescription;
+    const researchUrl = likeButton.dataset.researchUrl;
+    // const likes = likeButton.dataset.likes
+    const thumbsUpElement = likeButton.querySelector('.thumbs-up');
+    const likes = parseInt(thumbsUpElement.textContent.split(' ')[1]);
+
+    // Pre-fill input fields with existing 
+    
+    document.getElementById("work-flow-input").value = workflowStepName;
+    document.getElementById("tool-description-input").value = toolDescription || "";
+    document.getElementById("huggingface-url-input").value = huggingfaceUrl || "";
+    document.getElementById("github-url-input").value = githubUrl || "";
+    document.getElementById("chatgpt-prompt-input").value = chatgptPrompt || "";
+    document.getElementById("research-description-input").value = researchDescription || "";
+    document.getElementById("research-url-input").value = researchUrl || "";
+
+    // Add workflow_step_id to the submit button
+    document.getElementById("submit-work-flow").dataset.workflowStepId = workflowStepId;
+    document.getElementById("submit-work-flow").dataset.likes = likes;
+
+    showWorkFlowInput(likeButton.closest('td'));
+}
+
+
+function clearInputFields() {
+    document.getElementById("work-flow-input").value = "";
+    document.getElementById('name-input').value = "";
+    document.getElementById("tool-description-input").value = "";
+    document.getElementById("huggingface-url-input").value = "";
+    document.getElementById("github-url-input").value = "";
+    document.getElementById("chatgpt-prompt-input").value = "";
+    document.getElementById("research-description-input").value = "";
+    document.getElementById("research-url-input").value = "";
 }
 
 function deleteButton(likeButton) {
@@ -383,6 +617,16 @@ async function deleteWorkflowStep(workflowStepId) {
 
 function createLikebuttonsOnLoad() {
     const likeButtons = document.getElementsByClassName('like-btn');
+    // Retrieve the upvoted state from local storage
+    const upvotedSteps = JSON.parse(localStorage.getItem('upvotedSteps') || '{}');
+
+    for (let i = 0; i < likeButtons.length; i++) {
+        const workflowStepId = likeButtons[i].dataset.workflowStepId;
+        if (upvotedSteps.hasOwnProperty(workflowStepId)) {
+            likeButtons[i].classList.add('upvoted');
+        }
+    }
+
     for (let i = 0; i < likeButtons.length; i++) {
         // Get the workflow step name and Github URL from the data attributes
         const workFlowName = likeButtons[i].dataset.workflowStepName;
@@ -409,13 +653,15 @@ function createLikebuttonsOnLoad() {
 }
 
 // Add event listeners to all workflow step cells
-function addWorkflowStepCellEventListeners() {
-    const workFlowStepCells = document.getElementsByClassName('work-flow-step-cell');
-    for (let i = 0; i < workFlowStepCells.length; i++) {
-        workFlowStepCells[i].addEventListener('click', function () {
-            showWorkFlowInput(this);
+function addTaskCellEventListeners() {
+    const taskCells = document.querySelectorAll('#task-table-body td[data-task-id]');
+
+    taskCells.forEach(taskCell => {
+        taskCell.addEventListener('contextmenu', function (event) {
+        event.preventDefault(); // Prevent the browser context menu from showing
+        showTaskContextMenu(event);
         });
-    }
+    });
 }
 
 // Check if the workflow step name is a duplicate in the cell
@@ -450,4 +696,8 @@ for (let i = 0; i < buttonContainers.length; i++) {
     });
 }
 
-
+function replaceOldButton(oldButton, updatedButton) {
+    
+    // Replace the old button with the updated button
+    oldButton.parentElement.replaceChild(updatedButton, oldButton);
+}

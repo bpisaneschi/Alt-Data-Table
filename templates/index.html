@@ -8,16 +8,22 @@
 </head>
 <body>
     <div class="container">
-        <h1>Alternative Data Table</h1>
+        <h1>Open Source Task Table</h1>
         <form id="task-form">
-            <input type="text" id="task-input" name="task" placeholder="Enter a new task" required>
+            <input type="text" id="task-input" name="task" placeholder="Enter a new task" required autocomplete="off">
             <input type="submit" value="Add Task">
         </form>
+    <div class="image-container">
+        <img src="{{ url_for('static', filename='images/Data Scientist Workflow.png') }}" alt="Data Scientist Workflow" width="1000" height="100" />
+    </div>
+    <div class="instructions-container">
+        <p>**Click inside the cells to make submissions**     **Right click to edit or delete submissions**     **Click button to upvote submissions**</p>
+    </div>
         <table>
             <thead>
                 <tr>
                     <th>Task</th>
-                    <th>Work Flow Step</th>
+                    <th>Workflow Step</th>
                     <th>Tools</th>
                     <th>ChatGPT Prompts</th>
                     <th>Influential Research</th>
@@ -61,13 +67,23 @@
         </table>
         <div id="work-flow-input-container" class="custom-modal">
             <div class="custom-modal-content">
-                <input type="text" id="work-flow-input" placeholder="Enter a name">
-                <input type="text" id="tool-description-input" placeholder="Enter Description" style="display: none;"> <!-- Add this line -->
-                <input type="text" id="huggingface-url-input" placeholder="Enter huggingface URL" style="display: none;"> <!-- Add this line -->
-                <input type="text" id="github-url-input" placeholder="Enter Github URL" style="display: none;"> <!-- Add this line -->
-                <input type="text" id="chatgpt-prompt-input" placeholder="Enter ChatGPT Prompt" style="display: none;"> <!-- Add this line -->
-                <input type="text" id="research-description-input" placeholder="Enter Description" style="display: none;"> <!-- Add this line -->
-                <input type="text" id="research-url-input" placeholder="Enter Research URL" style="display: none;"> <!-- Add this line -->
+                <h3 id="modal-title"></h3>
+                <select id="work-flow-input">
+                    <option value="">Select a workflow step</option>
+                    <option value="Data Acquisition">Data Acquisition</option>
+                    <option value="Data Exploration">Data Exploration</option>
+                    <option value="Data Pre-Processing">Data Pre-Processing</option>
+                    <option value="Modeling">Modeling</option>
+                    <option value="Reporting">Reporting</option>
+                    <option value="Deployment">Deployment</option>
+                </select>
+                <input type="text" id="name-input" placeholder="Enter Name" style="display: none;" autocomplete="off">
+                <input type="text" id="tool-description-input" placeholder="Enter Description (optional)" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="huggingface-url-input" placeholder="Enter HuggingFace URL (optional if exists)" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="github-url-input" placeholder="Enter GitHub URL (optional if exists)" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="chatgpt-prompt-input" placeholder="Enter ChatGPT Prompt" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="research-description-input" placeholder="Enter Description (optional)" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="research-url-input" placeholder="Enter Research URL" style="display: none;" autocomplete="off"> <!-- Add this line -->
                 <button id="submit-work-flow">Submit</button>
             </div>
         </div>
