@@ -154,10 +154,14 @@ if __name__ == "__main__":
     with app.app_context():
         db.create_all()
 
-        task_to_delete = None
-        if task_to_delete:
-            db.session.delete(task_to_delete)
+        zero_likes = False
+        if zero_likes:
+            # Update all rows by setting the `likes` column to 0
+            db.session.query(WorkflowStep).update({WorkflowStep.likes: 0})
+
+            # Commit the changes to the database
             db.session.commit()
+            print("All likes have been reset to 0.")
 
     app.run()
 
