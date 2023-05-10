@@ -26,7 +26,7 @@
                     <th>Workflow Step</th>
                     <th>Tools</th>
                     <th>ChatGPT Prompts</th>
-                    <th>Influential Research</th>
+                    <th>Research/Resources</th>
                 </tr>
             </thead>
             <tbody id="task-table-body">
@@ -36,7 +36,7 @@
                         <td class="button-container workflow-step-container">
                             {% for workflow_step in task_data.workflow_steps['workflow_step'] %}
                             <button class="like-btn" data-workflow-step-id="{{ workflow_step.id }}" data-workflow-step-name="{{ workflow_step.name }}" data-workflow-category="{{ workflow_step.category }}">
-                                {{ workflow_step.name }} <span class="thumbs-up">👍 {{ workflow_step.likes }}</span>
+                                {{ workflow_step.name }} 
                             </button>
                             {% endfor %}
                         </td>
@@ -83,7 +83,7 @@
                 <input type="text" id="github-url-input" placeholder="Enter GitHub URL (optional if exists)" style="display: none;" autocomplete="off"> <!-- Add this line -->
                 <input type="text" id="chatgpt-prompt-input" placeholder="Enter ChatGPT Prompt" style="display: none;" autocomplete="off"> <!-- Add this line -->
                 <input type="text" id="research-description-input" placeholder="Enter Description (optional)" style="display: none;" autocomplete="off"> <!-- Add this line -->
-                <input type="text" id="research-url-input" placeholder="Enter Research URL" style="display: none;" autocomplete="off"> <!-- Add this line -->
+                <input type="text" id="research-url-input" placeholder="Enter Reference Link" style="display: none;" autocomplete="off"> <!-- Add this line -->
                 <button id="submit-work-flow">Submit</button>
             </div>
         </div>

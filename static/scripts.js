@@ -163,7 +163,7 @@ function showWorkFlowInput(cell) {
         titleText = 'Workflow Step Input'
     } else if (cell.cellIndex===2) {titleText='Tool Input'
     } else if (cell.cellIndex===3) {titleText='ChatGPT Prompt Input'
-    } else if (cell.cellIndex===4) {titleText='Influential Research Input'
+    } else if (cell.cellIndex===4) {titleText='Research/Resource Input'
     } 
 
 
@@ -261,7 +261,11 @@ async function submitWorkFlowName(event) {
 
     const likeButton = document.createElement('button');
     likeButton.classList.add('like-btn');
-    likeButton.innerHTML = `${workFlowName} <span class="thumbs-up">👍 ${likes}</span>`;
+    if (category === 'workflow_step') {
+        likeButton.innerHTML = `${workFlowName}`;
+    } else {
+        likeButton.innerHTML = `${workFlowName} <span class="thumbs-up">👍 ${likes}</span>`;
+    }
     likeButton.dataset.workflowStepId = workflowStepId;
     likeButton.dataset.workflowStepName = workFlowName;
     likeButton.dataset.workflowCategory = category;
@@ -353,6 +357,9 @@ function getCellCategory(cell) {
 
 // Sort the like buttons within a cell by their like counts
 function sortLikeButtons(cell) {
+    if (cell.cellIndex=== 1) {
+        return;
+    }
     const likeButtons = Array.from(cell.querySelectorAll('.like-btn'));
     likeButtons.sort((a, b) => {
         const aLikes = parseInt(a.querySelector('.thumbs-up').textContent.split(' ')[1]);
