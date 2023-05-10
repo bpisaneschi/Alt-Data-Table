@@ -150,6 +150,10 @@ def delete_task(task_id):
 def test():
     return "Test route is working!"
 
+@app.route('/instructions')
+def instructions():
+    return render_template('instructions.html')
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
