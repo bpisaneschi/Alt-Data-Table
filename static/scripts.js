@@ -233,14 +233,19 @@ async function submitWorkFlowName(event) {
     const researchDescription = researchDescriptionInput.value.trim();
     const researchUrl = researchUrlInput.value.trim(); 
     const category = getCellCategory(currentWorkFlowButton);
+    let submit = document.getElementById('submit-work-flow')    
+    let workflowStep_id = submit.dataset.workflowStepId
+    oldButton = document.querySelector(`.like-btn[data-workflow-step-id="${workflowStep_id}"]`)
 
     if (category === 'workflow_step') {
         workFlowName=workFlowInput.options[workFlowInput.selectedIndex].value.trim();}
         else {workFlowName=name}
 
     if (isWorkflowStepNameDuplicate(workFlowName, currentWorkFlowButton)) {
-        alert('This name already exists in this cell');
-        return;
+        if (!oldButton) {
+            alert('This name already exists in this cell');
+            return;
+        }
     }
 
     if (workFlowName.length === 0) {
@@ -248,12 +253,10 @@ async function submitWorkFlowName(event) {
         return;
     }
 
-    let submit = document.getElementById('submit-work-flow')    
-    console.log(submit)
-    let workflowStep_id = submit.dataset.workflowStepId
+    
     let likes = submit.dataset.likes
     if (!likes) {likes = 0;}
-    oldButton = document.querySelector(`.like-btn[data-workflow-step-id="${workflowStep_id}"]`)
+    
 
     const taskId = getTaskId(currentWorkFlowButton);
     const data = {task_id: taskId,workflow_step_name: workFlowName,category: category,tool_description: toolDescription,huggingface_url: huggingfaceUrl,github_url: githubUrl,likes: likes,chatgpt_prompt: chatgptPrompt,research_description: researchDescription,research_url: researchUrl}
@@ -357,6 +360,7 @@ function getCellCategory(cell) {
 
 // Sort the like buttons within a cell by their like counts
 function sortLikeButtons(cell) {
+
     if (cell.cellIndex=== 1) {
         return;
     }
@@ -376,8 +380,10 @@ function sortLikeButtons(cell) {
 async function addOrUpdateWorkflowStep(data, workflowStepId = null) {
     let url = '/workflow_step';
     let method = 'POST';
+    console.log(workflowStepId)
 
     if (workflowStepId) {
+        console.log('got here')
         url += '/' + workflowStepId;
         method = 'PUT';
     }
@@ -599,6 +605,8 @@ function clearInputFields() {
     document.getElementById("chatgpt-prompt-input").value = "";
     document.getElementById("research-description-input").value = "";
     document.getElementById("research-url-input").value = "";
+    let submit = document.getElementById('submit-work-flow')
+    submit.dataset.workflowStepId = "";  
 }
 
 function deleteButton(likeButton) {
