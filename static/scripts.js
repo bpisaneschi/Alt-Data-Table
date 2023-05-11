@@ -575,7 +575,9 @@ function editWorkflowStep (likeButton) {
     const researchUrl = likeButton.dataset.researchUrl;
     // const likes = likeButton.dataset.likes
     const thumbsUpElement = likeButton.querySelector('.thumbs-up');
-    const likes = parseInt(thumbsUpElement.textContent.split(' ')[1]);
+    if (!likeButton.dataset.category === 'workflow_step') { 
+        likes = parseInt(thumbsUpElement.textContent.split(' ')[1]);
+    } else {likes = 0}
 
     // Pre-fill input fields with existing 
     
